@@ -1,0 +1,15 @@
+{
+  "name": "tanku",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "api-tanku",
+    "front-tanku"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web \"npm run dev -w api-tanku\" \"npm run dev -w front-tanku\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}

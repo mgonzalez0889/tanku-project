@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+*.log
+
+# Secrets: only .env.example is versioned
+.env
+.env.*
+!.env.example
+
+# Local Claude Code files
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Private to the developer: kit report and the confidential requirements document
+informe-kit.md
+*.pdf
