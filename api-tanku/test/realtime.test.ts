@@ -1,38 +1,29 @@
-import type { Gift, Payment, ServerToClientEvents } from "@tanku/shared";
+import type { Gift, ServerToClientEvents } from "@tanku/shared";
 import { io as connectClient, type Socket } from "socket.io-client";
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { createApp } from "../src/app.js";
 import { createStore } from "../src/data/store.js";
-import { createRealtime } from "../src/realtime.js";
-import { startTestServer } from "./helpers/server.js";
+import { createRealtime, noopNotifier } from "../src/realtime.js";
+import {
+  accept,
+  approvedCard,
+  changeVariant,
+  createSpeakerGift,
+  paidSpeakerGift,
+  pay,
+  pendingCard,
+  rejectedCard,
+} from "./helpers/gifts.js";
+import { startTestServer, type TestServer } from "./helpers/server.js";
 
-let server: Awaited<ReturnType<typeof startTestServer>>;
-
-const approvedCard = { cardNumber: "4242 4242 4242 0000" };
-const rejectedCard = { cardNumber: "4242 4242 4242 0002" };
-const pendingCard = { cardNumber: "4242 4242 4242 0001" };
-
-async function createSpeakerGift(giverId: string, recipientId: string): Promise<Gift> {
-  const res = await server.send("POST", "/api/gifts", {
-    giverId,
-    recipientId,
-    productId: "product-speaker",
-    variantId: "black",
-  });
-  return (await res.json()) as Gift;
-}
-
-async function pay(giftId: string, card: { cardNumber: string }) {
-  const res = await server.send("POST", `/api/gifts/${giftId}/pay`, card);
-  return (await res.json()) as { gift: Gift; payment: Payment };
-}
+let server: TestServer;
 
 describe("paying notifies the recipient only when the payment is approved", () => {
   let giftReceived: Mock<(gift: Gift) => void>;
 
   beforeEach(async () => {
     giftReceived = vi.fn<(gift: Gift) => void>();
-    server = await startTestServer(createApp(createStore(), { giftReceived }));
+    server = await startTestServer(createApp(createStore(), { ...noopNotifier, giftReceived }));
   });
 
   afterEach(() => {
@@ -40,9 +31,9 @@ describe("paying notifies the recipient only when the payment is approved", () =
   });
 
   it("calls the notifier once with the same gift the response returns", async () => {
-    const gift = await createSpeakerGift("user-valentina", "user-santiago");
+    const gift = await createSpeakerGift(server);
 
-    const paid = await pay(gift.id, approvedCard);
+    const paid = await pay(server, gift.id, approvedCard);
 
     expect(paid.gift.status).toBe("sent");
     expect(giftReceived).toHaveBeenCalledTimes(1);
@@ -50,19 +41,68 @@ describe("paying notifies the recipient only when the payment is approved", () =
   });
 
   it("does not call it for a rejected payment", async () => {
-    const gift = await createSpeakerGift("user-valentina", "user-santiago");
+    const gift = await createSpeakerGift(server);
 
-    await pay(gift.id, rejectedCard);
+    await pay(server, gift.id, rejectedCard);
 
     expect(giftReceived).not.toHaveBeenCalled();
   });
 
   it("does not call it for a pending payment", async () => {
-    const gift = await createSpeakerGift("user-valentina", "user-santiago");
+    const gift = await createSpeakerGift(server);
 
-    await pay(gift.id, pendingCard);
+    await pay(server, gift.id, pendingCard);
 
     expect(giftReceived).not.toHaveBeenCalled();
+  });
+});
+
+describe("answering a gift notifies the giver only when it succeeds", () => {
+  let giftAccepted: Mock<(gift: Gift) => void>;
+
+  beforeEach(async () => {
+    giftAccepted = vi.fn<(gift: Gift) => void>();
+    server = await startTestServer(createApp(createStore(), { ...noopNotifier, giftAccepted }));
+  });
+
+  afterEach(() => {
+    server.close();
+  });
+
+  it("calls the notifier once with the gift that accept returns", async () => {
+    const gift = await paidSpeakerGift(server);
+
+    const accepted = (await (await accept(server, gift.id)).json()) as Gift;
+
+    expect(giftAccepted).toHaveBeenCalledTimes(1);
+    expect(giftAccepted).toHaveBeenCalledWith(accepted);
+  });
+
+  it("calls it with the original variant when the recipient changes the variant", async () => {
+    const gift = await paidSpeakerGift(server);
+
+    const changed = (await (await changeVariant(server, gift.id, { variantId: "blue" })).json()) as Gift;
+
+    expect(changed.originalVariantId).toBe("black");
+    expect(giftAccepted).toHaveBeenCalledTimes(1);
+    expect(giftAccepted).toHaveBeenCalledWith(changed);
+  });
+
+  it("does not call it again for a second answer (409)", async () => {
+    const gift = await paidSpeakerGift(server);
+    await accept(server, gift.id);
+
+    await accept(server, gift.id);
+
+    expect(giftAccepted).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not call it for a bad variant (400)", async () => {
+    const gift = await paidSpeakerGift(server);
+
+    await changeVariant(server, gift.id, { variantId: "xl" });
+
+    expect(giftAccepted).not.toHaveBeenCalled();
   });
 });
 
@@ -94,16 +134,16 @@ describe("sockets", () => {
     return socket;
   }
 
-  // Register it before triggering the payment: the event may arrive before the HTTP response does.
-  const nextGift = (socket: Socket<ServerToClientEvents>) =>
-    new Promise<Gift>((resolve) => socket.once("gift:received", resolve));
+  // Register it before triggering the action: the event may arrive before the HTTP response does.
+  const next = (socket: Socket<ServerToClientEvents>, event: "gift:received" | "gift:accepted") =>
+    new Promise<Gift>((resolve) => socket.once(event, resolve));
 
   it("sends the recipient the sent gift when the payment is approved", async () => {
     const santiago = await connectAs("user-santiago");
-    const gift = await createSpeakerGift("user-valentina", "user-santiago");
-    const received = nextGift(santiago);
+    const gift = await createSpeakerGift(server);
+    const received = next(santiago, "gift:received");
 
-    const paid = await pay(gift.id, approvedCard);
+    const paid = await pay(server, gift.id, approvedCard);
 
     const sent = await received;
     expect(sent).toEqual(paid.gift);
@@ -112,12 +152,10 @@ describe("sockets", () => {
 
   it("does not send it to the giver", async () => {
     const valentina = await connectAs("user-valentina");
-    const first = nextGift(valentina);
+    const first = next(valentina, "gift:received");
     // Gift A is paid by Valentina for Santiago; gift B is the other way round.
-    const giftA = await createSpeakerGift("user-valentina", "user-santiago");
-    await pay(giftA.id, approvedCard);
-    const giftB = await createSpeakerGift("user-santiago", "user-valentina");
-    await pay(giftB.id, approvedCard);
+    await paidSpeakerGift(server, "user-valentina", "user-santiago");
+    const giftB = await paidSpeakerGift(server, "user-santiago", "user-valentina");
 
     // Events keep their order on a socket: if A had leaked, it would arrive before B.
     expect((await first).id).toBe(giftB.id);
@@ -125,15 +163,47 @@ describe("sockets", () => {
 
   it("sends nothing for rejected or pending payments", async () => {
     const santiago = await connectAs("user-santiago");
-    const first = nextGift(santiago);
-    const rejected = await createSpeakerGift("user-valentina", "user-santiago");
-    await pay(rejected.id, rejectedCard);
-    const pending = await createSpeakerGift("user-valentina", "user-santiago");
-    await pay(pending.id, pendingCard);
-    const approved = await createSpeakerGift("user-valentina", "user-santiago");
-    await pay(approved.id, approvedCard);
+    const first = next(santiago, "gift:received");
+    const rejected = await createSpeakerGift(server);
+    await pay(server, rejected.id, rejectedCard);
+    const pending = await createSpeakerGift(server);
+    await pay(server, pending.id, pendingCard);
+    const approved = await paidSpeakerGift(server);
 
     expect((await first).id).toBe(approved.id);
+  });
+
+  it("tells the giver when the recipient accepts", async () => {
+    const valentina = await connectAs("user-valentina");
+    const gift = await paidSpeakerGift(server);
+    const heard = next(valentina, "gift:accepted");
+
+    const accepted = (await (await accept(server, gift.id)).json()) as Gift;
+
+    expect(await heard).toEqual(accepted);
+  });
+
+  it("tells the giver which variant the recipient changed from", async () => {
+    const valentina = await connectAs("user-valentina");
+    const gift = await paidSpeakerGift(server);
+    const heard = next(valentina, "gift:accepted");
+
+    await changeVariant(server, gift.id, { variantId: "blue" });
+
+    expect(await heard).toMatchObject({ variantId: "blue", originalVariantId: "black" });
+  });
+
+  it("does not tell the recipient that they accepted", async () => {
+    const santiago = await connectAs("user-santiago");
+    const first = next(santiago, "gift:accepted");
+    // Santiago accepts gift A (Valentina's); gift B is Santiago's own gift, which Valentina accepts.
+    const giftA = await paidSpeakerGift(server, "user-valentina", "user-santiago");
+    await accept(server, giftA.id);
+    const giftB = await paidSpeakerGift(server, "user-santiago", "user-valentina");
+    await accept(server, giftB.id);
+
+    // Santiago is only the giver of B, so B is the first acceptance he hears about.
+    expect((await first).id).toBe(giftB.id);
   });
 
   it.each([

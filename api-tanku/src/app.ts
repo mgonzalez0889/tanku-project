@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
+import type { Gift, Product } from "@tanku/shared";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { createStore, type Store } from "./data/store.js";
 import { rankProducts } from "./domain/affinity.js";
 import { checkout } from "./domain/checkout.js";
 import { createGift } from "./domain/create-gift.js";
 import { DomainError, type DomainErrorCode } from "./domain/errors.js";
-import { isVisibleTo } from "./domain/gift.js";
+import { isVisibleTo, transitionGift } from "./domain/gift.js";
 import { parseTasteCard } from "./domain/taste-card.js";
 import { noopNotifier, type Notifier } from "./realtime.js";
 
@@ -28,6 +29,25 @@ export function createApp(store: Store = createStore(), notifier: Notifier = noo
     if (!store.users.some((user) => user.id === userId)) {
       throw new DomainError("USER_NOT_FOUND", `Unknown user "${userId}"`);
     }
+  }
+
+  function requireGift(giftId: string): { index: number; gift: Gift } {
+    const gift = store.gifts.find((candidate) => candidate.id === giftId);
+    if (!gift) throw new DomainError("GIFT_NOT_FOUND", `Unknown gift "${giftId}"`);
+    return { index: store.gifts.indexOf(gift), gift };
+  }
+
+  /** Stores the gift the recipient answered, tells the giver and replies with it. */
+  function answerGift(index: number, answered: Gift, res: Response): void {
+    store.gifts[index] = answered;
+    notifier.giftAccepted(answered);
+    res.json(answered);
+  }
+
+  function requireProduct(gift: Gift): Product {
+    const product = store.products.find((candidate) => candidate.id === gift.productId);
+    if (!product) throw new Error(`Gift ${gift.id} points to a product that is not in the catalog`);
+    return product;
   }
 
   app.get("/api/health", (_req, res) => {
@@ -73,18 +93,33 @@ export function createApp(store: Store = createStore(), notifier: Notifier = noo
   // Simulated checkout. The handler is synchronous, so two quick requests run one after the other and
   // the second finds the gift already paid (409): no idempotency key is needed.
   app.post("/api/gifts/:giftId/pay", (req, res) => {
-    const index = store.gifts.findIndex((gift) => gift.id === req.params.giftId);
-    if (index === -1) throw new DomainError("GIFT_NOT_FOUND", `Unknown gift "${req.params.giftId}"`);
-    const gift = store.gifts[index]!;
-    const product = store.products.find((candidate) => candidate.id === gift.productId);
-    if (!product) throw new Error(`Gift ${gift.id} points to a product that is not in the catalog`);
+    const { index, gift } = requireGift(req.params.giftId);
 
-    const result = checkout(gift, product, req.body, randomUUID());
+    const result = checkout(gift, requireProduct(gift), req.body, randomUUID());
     store.gifts[index] = result.gift;
     store.payments.push(result.payment);
     // Only an approved payment makes the gift visible to the recipient, so only then they hear about it.
     if (result.payment.status === "approved") notifier.giftReceived(result.gift);
     res.status(201).json(result);
+  });
+
+  // The recipient answers a paid gift: accept it, or change its variant first ("cambio previo").
+  // Changing is accepting with another variant, so it can only happen once. Like the rest of the
+  // API there is no login: whoever calls these routes is trusted to be the recipient.
+  app.post("/api/gifts/:giftId/accept", (req, res) => {
+    const { index, gift } = requireGift(req.params.giftId);
+
+    answerGift(index, transitionGift(gift, { type: "accept" }), res);
+  });
+
+  app.post("/api/gifts/:giftId/change-variant", (req, res) => {
+    const { index, gift } = requireGift(req.params.giftId);
+    const variantId: unknown = req.body?.variantId;
+    if (typeof variantId !== "string") throw new DomainError("INVALID_VARIANT", "variantId must be text");
+    // The valid variants come from the catalog, never from the request.
+    const productVariantIds = requireProduct(gift).variants.map((variant) => variant.id);
+
+    answerGift(index, transitionGift(gift, { type: "changeVariant", variantId, productVariantIds }), res);
   });
 
   // The recipient does not see a gift until it is paid (see isVisibleTo).

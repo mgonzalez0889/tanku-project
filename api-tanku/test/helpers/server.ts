@@ -3,6 +3,8 @@ import type { AddressInfo } from "node:net";
 import type { Express } from "express";
 import type { Server } from "socket.io";
 
+export type TestServer = Awaited<ReturnType<typeof startTestServer>>;
+
 /**
  * Starts the app on a free port; call `close` when the tests end.
  * With `io`, Socket.io is attached to the same server and `close` shuts both down.

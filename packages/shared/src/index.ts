@@ -25,9 +25,17 @@ export interface Payment {
 export interface ServerToClientEvents {
   /** The payment was approved: the gift is now visible to its recipient. */
   "gift:received": (gift: Gift) => void;
+  /** The recipient accepted the gift; `originalVariantId` is set when they changed the variant first. */
+  "gift:accepted": (gift: Gift) => void;
 }
 
-export type Category = "fashion" | "tech" | "home" | "beauty" | "experiences";
+/** What `POST /api/gifts/:giftId/pay` answers (accept and change-variant answer a plain Gift). */
+export interface PayResponse {
+  gift: Gift;
+  payment: Payment;
+}
+
+export type Category ="fashion" | "tech" | "home" | "beauty" | "experiences";
 
 export interface ProductVariant {
   /** Unique within its product, e.g. "m". */
