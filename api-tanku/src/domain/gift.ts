@@ -1,4 +1,5 @@
 import type { Gift } from "@tanku/shared";
+import { DomainError } from "./errors.js";
 
 export type GiftAction =
   | { type: "paymentApproved" }
@@ -6,15 +7,6 @@ export type GiftAction =
   | { type: "retryPayment" }
   | { type: "accept" }
   | { type: "changeVariant"; variantId: string; productVariantIds: string[] };
-
-export class DomainError extends Error {
-  constructor(
-    readonly code: "INVALID_TRANSITION" | "INVALID_VARIANT",
-    message: string,
-  ) {
-    super(message);
-  }
-}
 
 function invalidTransition(gift: Gift, action: GiftAction): DomainError {
   return new DomainError(

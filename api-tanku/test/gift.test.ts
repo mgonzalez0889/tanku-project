@@ -1,6 +1,7 @@
 import type { Gift, GiftStatus } from "@tanku/shared";
 import { describe, expect, it } from "vitest";
-import { DomainError, transitionGift, type GiftAction } from "../src/domain/gift.js";
+import { transitionGift, type GiftAction } from "../src/domain/gift.js";
+import { codeOf } from "./helpers/code-of.js";
 
 function makeGift(status: GiftStatus, overrides: Partial<Gift> = {}): Gift {
   return {
@@ -17,15 +18,6 @@ function makeGift(status: GiftStatus, overrides: Partial<Gift> = {}): Gift {
 
 function changeVariant(variantId: string, productVariantIds: string[]): GiftAction {
   return { type: "changeVariant", variantId, productVariantIds };
-}
-
-function codeOf(fn: () => unknown): string | undefined {
-  try {
-    fn();
-  } catch (error) {
-    return error instanceof DomainError ? error.code : undefined;
-  }
-  return undefined;
 }
 
 describe("valid transitions", () => {
