@@ -1,0 +1,76 @@
+import type { Gift } from "@tanku/shared";
+import { afterEach, beforeEach, expect, it } from "vitest";
+import { createApp } from "../src/app.js";
+import { startTestServer } from "./helpers/server.js";
+
+let server: Awaited<ReturnType<typeof startTestServer>>;
+
+// A fresh app per test: POST requests change the store.
+beforeEach(async () => {
+  server = await startTestServer(createApp());
+});
+
+afterEach(() => {
+  server.close();
+});
+
+const postGift = (body: unknown) =>
+  fetch(`${server.baseUrl}/api/gifts`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+const giftsOf = (userId: string) => fetch(`${server.baseUrl}/api/users/${userId}/gifts`);
+
+const speakerFromValentinaToSantiago = {
+  giverId: "user-valentina",
+  recipientId: "user-santiago",
+  productId: "product-speaker",
+  variantId: "black",
+  message: "Para tus caminatas",
+};
+
+it("POST /api/gifts creates a payment_pending gift that the giver then sees", async () => {
+  const res = await postGift(speakerFromValentinaToSantiago);
+  const gift = (await res.json()) as Gift;
+
+  expect(res.status).toBe(201);
+  expect(gift.status).toBe("payment_pending");
+  expect(typeof gift.id).toBe("string");
+  expect(await (await giftsOf("user-valentina")).json()).toEqual([gift]);
+});
+
+it("preselects the recipient's size for a fashion product without variantId", async () => {
+  const res = await postGift({
+    giverId: "user-valentina",
+    recipientId: "user-santiago",
+    productId: "product-tshirt",
+  });
+  const gift = (await res.json()) as Gift;
+
+  expect(res.status).toBe(201);
+  expect(gift.variantId).toBe("l");
+});
+
+it("keeps the gift hidden from the recipient until it is paid", async () => {
+  await postGift(speakerFromValentinaToSantiago);
+
+  const res = await giftsOf("user-santiago");
+
+  expect(await res.json()).toEqual([]);
+});
+
+it("answers 400 INVALID_GIFT for a bad body and stores nothing", async () => {
+  const res = await postGift({ ...speakerFromValentinaToSantiago, productId: "nothing" });
+
+  expect(res.status).toBe(400);
+  expect(await res.json()).toEqual({ error: "INVALID_GIFT" });
+  expect(await (await giftsOf("user-valentina")).json()).toEqual([]);
+});
+
+it("GET /api/users/:userId/gifts answers 404 USER_NOT_FOUND for an unknown user", async () => {
+  const res = await giftsOf("nobody");
+
+  expect(res.status).toBe(404);
+  expect(await res.json()).toEqual({ error: "USER_NOT_FOUND" });
+});

@@ -8,6 +8,12 @@ export type GiftAction =
   | { type: "accept" }
   | { type: "changeVariant"; variantId: string; productVariantIds: string[] };
 
+/** The giver sees every gift; the recipient only once it is paid, so the surprise is kept. */
+export function isVisibleTo(gift: Gift, userId: string): boolean {
+  if (userId === gift.giverId) return true;
+  return userId === gift.recipientId && (gift.status === "sent" || gift.status === "accepted");
+}
+
 function invalidTransition(gift: Gift, action: GiftAction): DomainError {
   return new DomainError(
     "INVALID_TRANSITION",

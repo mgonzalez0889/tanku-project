@@ -1,7 +1,10 @@
+import { randomUUID } from "node:crypto";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { createStore, type Store } from "./data/store.js";
 import { rankProducts } from "./domain/affinity.js";
+import { createGift } from "./domain/create-gift.js";
 import { DomainError, type DomainErrorCode } from "./domain/errors.js";
+import { isVisibleTo } from "./domain/gift.js";
 import { parseTasteCard } from "./domain/taste-card.js";
 
 // Typed by code: adding a DomainErrorCode without a status here is a compile error.
@@ -9,6 +12,7 @@ const statusByCode: Record<DomainErrorCode, number> = {
   INVALID_TRANSITION: 409,
   INVALID_VARIANT: 400,
   INVALID_TASTE_CARD: 400,
+  INVALID_GIFT: 400,
   USER_NOT_FOUND: 404,
 };
 
@@ -54,6 +58,19 @@ export function createApp(store: Store = createStore()) {
     requireUser(userId);
     store.tasteCards[userId] = parseTasteCard(userId, req.body, store.products);
     res.json(store.tasteCards[userId]);
+  });
+
+  app.post("/api/gifts", (req, res) => {
+    const gift = createGift(req.body, store, randomUUID());
+    store.gifts.push(gift);
+    res.status(201).json(gift);
+  });
+
+  // The recipient does not see a gift until it is paid (see isVisibleTo).
+  app.get("/api/users/:userId/gifts", (req, res) => {
+    const { userId } = req.params;
+    requireUser(userId);
+    res.json(store.gifts.filter((gift) => isVisibleTo(gift, userId)));
   });
 
   app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {

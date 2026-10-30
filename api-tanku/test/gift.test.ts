@@ -1,6 +1,6 @@
 import type { Gift, GiftStatus } from "@tanku/shared";
 import { describe, expect, it } from "vitest";
-import { transitionGift, type GiftAction } from "../src/domain/gift.js";
+import { isVisibleTo, transitionGift, type GiftAction } from "../src/domain/gift.js";
 import { codeOf } from "./helpers/code-of.js";
 
 function makeGift(status: GiftStatus, overrides: Partial<Gift> = {}): Gift {
@@ -99,5 +99,27 @@ describe("immutability", () => {
 
     expect(next).not.toBe(gift);
     expect(gift).toEqual(makeGift("sent"));
+  });
+});
+
+describe("isVisibleTo", () => {
+  const statuses: GiftStatus[] = ["payment_pending", "payment_failed", "sent", "accepted"];
+
+  it("shows the giver the gift in every status", () => {
+    for (const status of statuses) {
+      expect(isVisibleTo(makeGift(status), "user-ana")).toBe(true);
+    }
+  });
+
+  it("shows the recipient the gift only once it is sent or accepted", () => {
+    const visible = statuses.filter((status) => isVisibleTo(makeGift(status), "user-luis"));
+
+    expect(visible).toEqual(["sent", "accepted"]);
+  });
+
+  it("shows a third person nothing", () => {
+    for (const status of statuses) {
+      expect(isVisibleTo(makeGift(status), "user-other")).toBe(false);
+    }
   });
 });

@@ -2,6 +2,7 @@ export type DomainErrorCode =
   | "INVALID_TRANSITION"
   | "INVALID_VARIANT"
   | "INVALID_TASTE_CARD"
+  | "INVALID_GIFT"
   | "USER_NOT_FOUND";
 
 export class DomainError extends Error {
