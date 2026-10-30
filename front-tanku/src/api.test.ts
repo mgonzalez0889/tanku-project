@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, request } from './api.ts'
+import { api, ApiError, request } from './api.ts'
 
 function stubFetch(response: Response) {
   const fetchMock = vi.fn().mockResolvedValue(response)
@@ -58,6 +58,40 @@ describe('request', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/users', {
       method: 'GET',
+      headers: undefined,
+      body: undefined,
+    })
+  })
+})
+
+describe('the API calls of the gifts screens', () => {
+  it('asks for the gifts a user can see', async () => {
+    const fetchMock = stubFetch(new Response('[]', { status: 200 }))
+
+    await api.giftsOf('user-santiago')
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/users/user-santiago/gifts', {
+      method: 'GET',
+      headers: undefined,
+      body: undefined,
+    })
+  })
+
+  it('asks for the whole catalog', async () => {
+    const fetchMock = stubFetch(new Response('[]', { status: 200 }))
+
+    await api.products()
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/products', { method: 'GET', headers: undefined, body: undefined })
+  })
+
+  it('accepts a gift with a POST and no body', async () => {
+    const fetchMock = stubFetch(new Response('{}', { status: 200 }))
+
+    await api.accept('gift-1')
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/gifts/gift-1/accept', {
+      method: 'POST',
       headers: undefined,
       body: undefined,
     })

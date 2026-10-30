@@ -41,7 +41,12 @@ export const api = {
   /** The catalog ordered for `recipientId`: their avoided products are hidden. */
   productsFor: (recipientId: string) =>
     request<Product[]>('GET', `/api/products?recipientId=${encodeURIComponent(recipientId)}`),
+  /** The whole catalog, unordered: used to look products up by id (names and variant labels). */
+  products: () => request<Product[]>('GET', '/api/products'),
+  /** The gifts the user can see: all they gave, and what they received once it is paid. */
+  giftsOf: (userId: string) => request<Gift[]>('GET', `/api/users/${encodeURIComponent(userId)}/gifts`),
   createGift: (gift: GiftRequest) => request<Gift>('POST', '/api/gifts', gift),
+  accept: (giftId: string) => request<Gift>('POST', `/api/gifts/${encodeURIComponent(giftId)}/accept`),
   pay: (giftId: string, cardNumber: string) =>
     request<PayResponse>('POST', `/api/gifts/${encodeURIComponent(giftId)}/pay`, { cardNumber }),
 }

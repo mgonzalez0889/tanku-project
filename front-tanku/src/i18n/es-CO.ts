@@ -4,6 +4,29 @@ export const messages = {
   'app.title': 'Nido · Regalos que conectan',
   'user.picker.label': 'Estás usando Nido como',
 
+  'tabs.give': 'Regalar',
+  'tabs.gifts': 'Mis regalos',
+
+  'inbox.loading': 'Cargando tus regalos…',
+  'inbox.received.title': 'Lo que te regalaron',
+  'inbox.received.empty': 'Tus regalos aparecen aquí cuando llegan.',
+  'inbox.given.title': 'Lo que regalaste',
+  'inbox.given.empty': 'Todavía no has regalado nada.',
+  'inbox.from': 'De {name}',
+  'inbox.to': 'Para {name}',
+  'inbox.accept': 'Aceptar',
+  'inbox.accepting': 'Aceptando…',
+
+  'giftStatus.payment_pending': 'Pago pendiente',
+  'giftStatus.payment_failed': 'Pago rechazado',
+  'giftStatus.sent': 'Enviado',
+  'giftStatus.accepted': 'Aceptado',
+
+  'notice.received': '{name} te envió un regalo',
+  'notice.accepted': '{name} aceptó tu regalo',
+  'notice.changed': '{name} aceptó tu regalo y cambió {from} → {to}',
+  'notice.dismiss': 'Cerrar aviso',
+
   'catalog.title': 'Regala algo que le guste a {name}',
   'catalog.hint': 'Ordenamos los productos según sus gustos, que se mantienen privados.',
   'catalog.loading': 'Cargando productos…',

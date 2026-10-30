@@ -161,6 +161,78 @@ button.secondary {
   gap: 0.5rem;
 }
 
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.toasts {
+  position: sticky;
+  top: 0.5rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  color: #ffffff;
+  background: #1f2937;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.toast button {
+  min-width: 2.75rem;
+  background: transparent;
+  font-size: 1.25rem;
+}
+
+.gifts {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.gift {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.gift p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.gift .message {
+  font-style: italic;
+}
+
+.status {
+  align-self: flex-start;
+  padding: 0.15rem 0.6rem;
+  border-radius: 1rem;
+  color: var(--accent);
+  background: #fde8ea;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .product button {
   width: 100%;
   margin-top: 0.5rem;
