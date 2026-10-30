@@ -20,3 +20,37 @@ export interface Payment {
   amountCop: number;
   status: PaymentStatus;
 }
+
+export type Category = "fashion" | "tech" | "home" | "beauty" | "experiences";
+
+export interface ProductVariant {
+  /** Unique within its product, e.g. "m". */
+  id: string;
+  label: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  category: Category;
+  /** Whole Colombian pesos. */
+  priceCop: number;
+  tags: string[];
+  variants: ProductVariant[];
+}
+
+export interface User {
+  id: string;
+  name: string;
+}
+
+/** Private to its owner: the giver never receives it. */
+export interface TasteCard {
+  userId: string;
+  favoriteCategories: Category[];
+  likedTags: string[];
+  avoidedTags: string[];
+  /** A variant id shared by every fashion product ("s", "m" or "l"). */
+  preferredSize?: string;
+}
