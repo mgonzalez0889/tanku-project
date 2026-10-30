@@ -1,4 +1,4 @@
-import type { User } from '@tanku/shared'
+import type { Product, User } from '@tanku/shared'
 import { api } from '../api.ts'
 import { formatCop } from '../format.ts'
 import { t } from '../i18n/index.ts'
@@ -6,7 +6,7 @@ import { useLoad } from '../useLoad.ts'
 import { ErrorAlert } from './ErrorAlert.tsx'
 
 /** The catalog as the recipient's taste orders it; the card itself never reaches this screen. */
-export function Catalog({ recipient }: { recipient: User }) {
+export function Catalog({ recipient, onChoose }: { recipient: User; onChoose: (product: Product) => void }) {
   const { data: products, error } = useLoad(() => api.productsFor(recipient.id), [recipient.id])
 
   return (
@@ -23,6 +23,9 @@ export function Catalog({ recipient }: { recipient: User }) {
             <h3>{product.name}</h3>
             <p>{product.description}</p>
             <strong>{formatCop(product.priceCop)}</strong>
+            <button type="button" onClick={() => onChoose(product)}>
+              {t('catalog.give')}
+            </button>
           </li>
         ))}
       </ul>

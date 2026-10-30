@@ -112,7 +112,65 @@ select {
   letter-spacing: 0.04em;
 }
 
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+input,
+textarea {
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  font-weight: 400;
+}
+
+button {
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 0.5rem;
+  color: #ffffff;
+  background: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+button.secondary {
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.product button {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
 @media (min-width: 40rem) {
+  .actions {
+    flex-direction: row;
+  }
+
   header {
     flex-direction: row;
     align-items: center;

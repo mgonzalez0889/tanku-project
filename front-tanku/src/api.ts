@@ -1,4 +1,5 @@
-import type { ApiErrorCode, Product, User } from '@tanku/shared'
+import type { ApiErrorCode, Gift, PayResponse, Product, User } from '@tanku/shared'
+import type { GiftRequest } from './gifts.ts'
 
 /** The API answered with an error; `code` is UNKNOWN when there was no usable answer. */
 export class ApiError extends Error {
@@ -40,4 +41,7 @@ export const api = {
   /** The catalog ordered for `recipientId`: their avoided products are hidden. */
   productsFor: (recipientId: string) =>
     request<Product[]>('GET', `/api/products?recipientId=${encodeURIComponent(recipientId)}`),
+  createGift: (gift: GiftRequest) => request<Gift>('POST', '/api/gifts', gift),
+  pay: (giftId: string, cardNumber: string) =>
+    request<PayResponse>('POST', `/api/gifts/${encodeURIComponent(giftId)}/pay`, { cardNumber }),
 }
