@@ -1,5 +1,5 @@
 import type { Gift, Product, User } from '@tanku/shared'
-import { productName, splitGifts, userName } from '../gifts.ts'
+import { canPay, productName, splitGifts, userName } from '../gifts.ts'
 import { t } from '../i18n/index.ts'
 import { ErrorAlert } from './ErrorAlert.tsx'
 import { ReceivedGift } from './ReceivedGift.tsx'
@@ -11,10 +11,11 @@ interface Props {
   gifts: Gift[] | null
   error: string | null
   onChange: (gift: Gift) => void
+  onPay: (gift: Gift) => void
 }
 
-/** "Mis regalos": what I received (I can accept it) and what I gave (with its status). */
-export function Inbox({ me, users, products, gifts, error, onChange }: Props) {
+/** "Mis regalos": what I received (I can answer it) and what I gave (with its status; unpaid ones can be paid). */
+export function Inbox({ me, users, products, gifts, error, onChange, onPay }: Props) {
   if (error) return <ErrorAlert message={error} />
   if (gifts === null) return <p>{t('inbox.loading')}</p>
 
@@ -31,7 +32,7 @@ export function Inbox({ me, users, products, gifts, error, onChange }: Props) {
             <ReceivedGift
               key={gift.id}
               gift={gift}
-              productName={productName(products, gift.productId)}
+              product={products.find((product) => product.id === gift.productId)}
               fromName={userName(users, gift.giverId)}
               onChange={onChange}
             />
@@ -49,6 +50,11 @@ export function Inbox({ me, users, products, gifts, error, onChange }: Props) {
               <h3>{productName(products, gift.productId)}</h3>
               <p>{t('inbox.to', { name: userName(users, gift.recipientId) })}</p>
               <span className="status">{t(`giftStatus.${gift.status}`)}</span>
+              {canPay(gift) && (
+                <button type="button" onClick={() => onPay(gift)}>
+                  {t('inbox.pay')}
+                </button>
+              )}
             </li>
           ))}
         </ul>

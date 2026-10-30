@@ -5,6 +5,7 @@ import {
   buildGiftRequest,
   canPay,
   noticeText,
+  otherVariants,
   splitGifts,
   upsertGift,
   type Notice,
@@ -167,5 +168,36 @@ describe('noticeText', () => {
 
     expect(noticeText(notice('received', stranger), users, products).values).toEqual({ name: 'user-nobody' })
     expect(noticeText(notice('accepted', odd), users, products).values).toMatchObject({ from: 'Negro', to: 'green' })
+  })
+})
+
+describe('otherVariants', () => {
+  const shirt: Product = {
+    id: 'product-tshirt',
+    name: 'Camiseta',
+    description: '',
+    category: 'fashion',
+    priceCop: 59900,
+    tags: [],
+    variants: [
+      { id: 's', label: 'S' },
+      { id: 'm', label: 'M' },
+      { id: 'l', label: 'L' },
+    ],
+  }
+  const gift = { ...giftIn('sent'), productId: 'product-tshirt', variantId: 'm' }
+
+  it('lists the variants of the product other than the one the gift has', () => {
+    expect(otherVariants(shirt, gift).map((variant) => variant.id)).toEqual(['s', 'l'])
+  })
+
+  it('is empty when the product has no other variant', () => {
+    const single = { ...shirt, variants: [{ id: 'm', label: 'M' }] }
+
+    expect(otherVariants(single, gift)).toEqual([])
+  })
+
+  it('is empty when the product is not known', () => {
+    expect(otherVariants(undefined, gift)).toEqual([])
   })
 })

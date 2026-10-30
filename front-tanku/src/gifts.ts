@@ -1,4 +1,4 @@
-import type { Gift, Product, User } from '@tanku/shared'
+import type { Gift, Product, ProductVariant, User } from '@tanku/shared'
 
 /** The longest message the API accepts. */
 export const MAX_MESSAGE_LENGTH = 280
@@ -57,6 +57,11 @@ export const productName = (products: Product[], productId: string): string =>
 const variantLabel = (products: Product[], productId: string, variantId: string): string =>
   products.find((product) => product.id === productId)?.variants.find((variant) => variant.id === variantId)?.label ??
   variantId
+
+/** The variants a recipient can switch to: the ones of the product other than the gift's own. */
+export function otherVariants(product: Product | undefined, gift: Gift): ProductVariant[] {
+  return product?.variants.filter((variant) => variant.id !== gift.variantId) ?? []
+}
 
 /** A live event the user is told about: a gift arrived, or the recipient accepted it. */
 export interface Notice {

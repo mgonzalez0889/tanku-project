@@ -13,12 +13,16 @@ interface Props {
   me: User
   recipient: User
   product: Product
+  /** A gift that already exists and still has to be paid: the flow starts at the payment. */
+  initialGift?: Gift
+  /** The gift as the payment left it, so the lists the user comes back to are already up to date. */
+  onGiftChanged: (gift: Gift) => void
   onClose: () => void
 }
 
 /** Giving a product in three steps: what to send, paying for it, and how the payment went. */
-export function GiveFlow({ me, recipient, product, onClose }: Props) {
-  const [step, setStep] = useState<Step>({ name: 'form' })
+export function GiveFlow({ me, recipient, product, initialGift, onGiftChanged, onClose }: Props) {
+  const [step, setStep] = useState<Step>(initialGift ? { name: 'checkout', gift: initialGift } : { name: 'form' })
 
   if (step.name === 'form') {
     return (
@@ -37,7 +41,11 @@ export function GiveFlow({ me, recipient, product, onClose }: Props) {
       <CheckoutForm
         gift={step.gift}
         product={product}
-        onPaid={(result) => setStep({ name: 'result', result })}
+        onPaid={(result) => {
+          onGiftChanged(result.gift)
+          setStep({ name: 'result', result })
+        }}
+        onCancel={onClose}
       />
     )
   }

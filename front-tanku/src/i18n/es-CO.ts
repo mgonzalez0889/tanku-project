@@ -6,6 +6,7 @@ export const messages = {
 
   'tabs.give': 'Regalar',
   'tabs.gifts': 'Mis regalos',
+  'tabs.new': 'Nuevo',
 
   'inbox.loading': 'Cargando tus regalos…',
   'inbox.received.title': 'Lo que te regalaron',
@@ -16,6 +17,10 @@ export const messages = {
   'inbox.to': 'Para {name}',
   'inbox.accept': 'Aceptar',
   'inbox.accepting': 'Aceptando…',
+  'inbox.variant': 'Opción: {label}',
+  'inbox.changeTo': 'Cambiar a',
+  'inbox.change': 'Cambiar y aceptar',
+  'inbox.pay': 'Pagar',
 
   'giftStatus.payment_pending': 'Pago pendiente',
   'giftStatus.payment_failed': 'Pago rechazado',
@@ -49,6 +54,7 @@ export const messages = {
   'checkout.help': 'Es una prueba y no se cobra nada. Usa una tarjeta que termine en 0000 (aprobada), 0002 (rechazada) o 0001 (en verificación).',
   'checkout.pay': 'Pagar',
   'checkout.paying': 'Pagando…',
+  'checkout.back': 'Volver',
 
   'result.approved.title': '¡Regalo enviado!',
   'result.approved.body': '{name} lo verá en cuanto llegue.',

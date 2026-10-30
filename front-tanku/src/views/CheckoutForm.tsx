@@ -10,10 +10,12 @@ interface Props {
   gift: Gift
   product: Product
   onPaid: (result: PayResponse) => void
+  /** Leave without paying: the gift stays pending and can be paid later from "Mis regalos". */
+  onCancel: () => void
 }
 
 /** The simulated checkout: the card number only travels to the API, it is never kept here. */
-export function CheckoutForm({ gift, product, onPaid }: Props) {
+export function CheckoutForm({ gift, product, onPaid, onCancel }: Props) {
   const [cardNumber, setCardNumber] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [paying, setPaying] = useState(false)
@@ -53,6 +55,9 @@ export function CheckoutForm({ gift, product, onPaid }: Props) {
       <div className="actions">
         <button type="submit" disabled={paying}>
           {t(paying ? 'checkout.paying' : 'checkout.pay')}
+        </button>
+        <button type="button" className="secondary" onClick={onCancel}>
+          {t('checkout.back')}
         </button>
       </div>
     </form>

@@ -96,4 +96,16 @@ describe('the API calls of the gifts screens', () => {
       body: undefined,
     })
   })
+
+  it('changes the variant of a gift with a POST and the new variant in the body', async () => {
+    const fetchMock = stubFetch(new Response('{}', { status: 200 }))
+
+    await api.changeVariant('gift-1', 'blue')
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/gifts/gift-1/change-variant', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{"variantId":"blue"}',
+    })
+  })
 })

@@ -1,4 +1,4 @@
-import type { Product, User } from '@tanku/shared'
+import type { Gift, Product, User } from '@tanku/shared'
 import { useState } from 'react'
 import { noticeText } from '../gifts.ts'
 import { t } from '../i18n/index.ts'
@@ -8,7 +8,8 @@ import { GiveFlow } from './GiveFlow.tsx'
 import { Inbox } from './Inbox.tsx'
 import { Toast } from './Toast.tsx'
 
-type View = { name: 'catalog' } | { name: 'give'; product: Product } | { name: 'gifts' }
+// `gift` is set when an unpaid gift is being paid from "Mis regalos" instead of created from the catalog.
+type View = { name: 'catalog' } | { name: 'give'; product: Product; gift?: Gift } | { name: 'gifts' }
 
 interface Props {
   me: User
@@ -20,12 +21,19 @@ interface Props {
 /** What a signed-in user sees: the catalog to give, "Mis regalos", and live notices. */
 export function Home({ me, recipient, users, products }: Props) {
   const [view, setView] = useState<View>({ name: 'catalog' })
-  const { gifts, error, notices, dismiss, upsert, reload } = useGifts(me.id)
+  const { gifts, error, notices, dismiss, upsert, reload, hasNews, clearNews } = useGifts(me.id)
 
   function show(next: View) {
     // The giver gets no event for their own payment, so the list is read again when it is opened.
     if (next.name === 'gifts') reload()
+    // Entering or leaving "Mis regalos" counts as having seen what arrived so far.
+    if (next.name === 'gifts' || view.name === 'gifts') clearNews()
     setView(next)
+  }
+
+  function payLater(gift: Gift) {
+    const product = products.find((candidate) => candidate.id === gift.productId)
+    if (product) show({ name: 'give', product, gift })
   }
 
   const onGifts = view.name === 'gifts'
@@ -48,6 +56,7 @@ export function Home({ me, recipient, users, products }: Props) {
           onClick={() => show({ name: 'gifts' })}
         >
           {t('tabs.gifts')}
+          {hasNews && !onGifts && <span className="badge">{t('tabs.new')}</span>}
         </button>
       </nav>
 
@@ -59,15 +68,25 @@ export function Home({ me, recipient, users, products }: Props) {
       </div>
 
       {view.name === 'gifts' && (
-        <Inbox me={me} users={users} products={products} gifts={gifts} error={error} onChange={upsert} />
+        <Inbox
+          me={me}
+          users={users}
+          products={products}
+          gifts={gifts}
+          error={error}
+          onChange={upsert}
+          onPay={payLater}
+        />
       )}
       {view.name === 'give' && (
         <GiveFlow
-          key={view.product.id}
+          key={`${view.product.id}:${view.gift?.id ?? 'new'}`}
           me={me}
           recipient={recipient}
           product={view.product}
-          onClose={() => show({ name: 'catalog' })}
+          initialGift={view.gift}
+          onGiftChanged={upsert}
+          onClose={() => show(view.gift ? { name: 'gifts' } : { name: 'catalog' })}
         />
       )}
       {view.name === 'catalog' && (

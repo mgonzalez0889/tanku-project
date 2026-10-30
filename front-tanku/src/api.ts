@@ -47,6 +47,9 @@ export const api = {
   giftsOf: (userId: string) => request<Gift[]>('GET', `/api/users/${encodeURIComponent(userId)}/gifts`),
   createGift: (gift: GiftRequest) => request<Gift>('POST', '/api/gifts', gift),
   accept: (giftId: string) => request<Gift>('POST', `/api/gifts/${encodeURIComponent(giftId)}/accept`),
+  /** The recipient swaps the variant and accepts in one step (it can only happen once). */
+  changeVariant: (giftId: string, variantId: string) =>
+    request<Gift>('POST', `/api/gifts/${encodeURIComponent(giftId)}/change-variant`, { variantId }),
   pay: (giftId: string, cardNumber: string) =>
     request<PayResponse>('POST', `/api/gifts/${encodeURIComponent(giftId)}/pay`, { cardNumber }),
 }
