@@ -14,13 +14,8 @@ afterEach(() => {
   server.close();
 });
 
-const postGift = (body: unknown) =>
-  fetch(`${server.baseUrl}/api/gifts`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
-const giftsOf = (userId: string) => fetch(`${server.baseUrl}/api/users/${userId}/gifts`);
+const postGift = (body: unknown) => server.send("POST", "/api/gifts", body);
+const giftsOf = (userId: string) => server.get(`/api/users/${userId}/gifts`);
 
 const speakerFromValentinaToSantiago = {
   giverId: "user-valentina",

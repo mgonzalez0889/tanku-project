@@ -3,7 +3,9 @@ export type DomainErrorCode =
   | "INVALID_VARIANT"
   | "INVALID_TASTE_CARD"
   | "INVALID_GIFT"
-  | "USER_NOT_FOUND";
+  | "INVALID_PAYMENT"
+  | "USER_NOT_FOUND"
+  | "GIFT_NOT_FOUND";
 
 export class DomainError extends Error {
   constructor(

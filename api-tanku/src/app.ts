@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { createStore, type Store } from "./data/store.js";
 import { rankProducts } from "./domain/affinity.js";
+import { checkout } from "./domain/checkout.js";
 import { createGift } from "./domain/create-gift.js";
 import { DomainError, type DomainErrorCode } from "./domain/errors.js";
 import { isVisibleTo } from "./domain/gift.js";
@@ -13,7 +14,9 @@ const statusByCode: Record<DomainErrorCode, number> = {
   INVALID_VARIANT: 400,
   INVALID_TASTE_CARD: 400,
   INVALID_GIFT: 400,
+  INVALID_PAYMENT: 400,
   USER_NOT_FOUND: 404,
+  GIFT_NOT_FOUND: 404,
 };
 
 export function createApp(store: Store = createStore()) {
@@ -64,6 +67,21 @@ export function createApp(store: Store = createStore()) {
     const gift = createGift(req.body, store, randomUUID());
     store.gifts.push(gift);
     res.status(201).json(gift);
+  });
+
+  // Simulated checkout. The handler is synchronous, so two quick requests run one after the other and
+  // the second finds the gift already paid (409): no idempotency key is needed.
+  app.post("/api/gifts/:giftId/pay", (req, res) => {
+    const index = store.gifts.findIndex((gift) => gift.id === req.params.giftId);
+    if (index === -1) throw new DomainError("GIFT_NOT_FOUND", `Unknown gift "${req.params.giftId}"`);
+    const gift = store.gifts[index]!;
+    const product = store.products.find((candidate) => candidate.id === gift.productId);
+    if (!product) throw new Error(`Gift ${gift.id} points to a product that is not in the catalog`);
+
+    const result = checkout(gift, product, req.body, randomUUID());
+    store.gifts[index] = result.gift;
+    store.payments.push(result.payment);
+    res.status(201).json(result);
   });
 
   // The recipient does not see a gift until it is paid (see isVisibleTo).

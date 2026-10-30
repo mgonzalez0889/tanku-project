@@ -15,13 +15,8 @@ afterEach(() => {
   server.close();
 });
 
-const get = (path: string) => fetch(`${server.baseUrl}${path}`);
-const put = (path: string, body: unknown) =>
-  fetch(`${server.baseUrl}${path}`, {
-    method: "PUT",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
+const get = (path: string) => server.get(path);
+const put = (path: string, body: unknown) => server.send("PUT", path, body);
 
 describe("catalog", () => {
   it("GET /api/users returns the 2 preloaded users", async () => {
