@@ -21,6 +21,12 @@ export interface Payment {
   status: PaymentStatus;
 }
 
+/** Events the server sends to a user's sockets. */
+export interface ServerToClientEvents {
+  /** The payment was approved: the gift is now visible to its recipient. */
+  "gift:received": (gift: Gift) => void;
+}
+
 export type Category = "fashion" | "tech" | "home" | "beauty" | "experiences";
 
 export interface ProductVariant {

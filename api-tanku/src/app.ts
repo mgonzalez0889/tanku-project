@@ -7,6 +7,7 @@ import { createGift } from "./domain/create-gift.js";
 import { DomainError, type DomainErrorCode } from "./domain/errors.js";
 import { isVisibleTo } from "./domain/gift.js";
 import { parseTasteCard } from "./domain/taste-card.js";
+import { noopNotifier, type Notifier } from "./realtime.js";
 
 // Typed by code: adding a DomainErrorCode without a status here is a compile error.
 const statusByCode: Record<DomainErrorCode, number> = {
@@ -19,7 +20,7 @@ const statusByCode: Record<DomainErrorCode, number> = {
   GIFT_NOT_FOUND: 404,
 };
 
-export function createApp(store: Store = createStore()) {
+export function createApp(store: Store = createStore(), notifier: Notifier = noopNotifier) {
   const app = express();
   app.use(express.json());
 
@@ -81,6 +82,8 @@ export function createApp(store: Store = createStore()) {
     const result = checkout(gift, product, req.body, randomUUID());
     store.gifts[index] = result.gift;
     store.payments.push(result.payment);
+    // Only an approved payment makes the gift visible to the recipient, so only then they hear about it.
+    if (result.payment.status === "approved") notifier.giftReceived(result.gift);
     res.status(201).json(result);
   });
 
