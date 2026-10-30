@@ -1,11 +1,7 @@
-export type DomainErrorCode =
-  | "INVALID_TRANSITION"
-  | "INVALID_VARIANT"
-  | "INVALID_TASTE_CARD"
-  | "INVALID_GIFT"
-  | "INVALID_PAYMENT"
-  | "USER_NOT_FOUND"
-  | "GIFT_NOT_FOUND";
+import type { DomainErrorCode } from "@tanku/shared";
+
+// The list of codes lives in shared so the front can type its messages with it.
+export type { DomainErrorCode };
 
 export class DomainError extends Error {
   constructor(

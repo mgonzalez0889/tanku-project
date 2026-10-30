@@ -21,6 +21,19 @@ export interface Payment {
   status: PaymentStatus;
 }
 
+/** Business-rule errors the API answers as `{ error: code }`; each one has an HTTP status. */
+export type DomainErrorCode =
+  | "INVALID_TRANSITION"
+  | "INVALID_VARIANT"
+  | "INVALID_TASTE_CARD"
+  | "INVALID_GIFT"
+  | "INVALID_PAYMENT"
+  | "USER_NOT_FOUND"
+  | "GIFT_NOT_FOUND";
+
+/** Every error code a client can receive from the API. */
+export type ApiErrorCode = DomainErrorCode | "INVALID_JSON" | "INTERNAL_ERROR";
+
 /** Events the server sends to a user's sockets. */
 export interface ServerToClientEvents {
   /** The payment was approved: the gift is now visible to its recipient. */
