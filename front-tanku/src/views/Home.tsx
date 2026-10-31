@@ -6,10 +6,15 @@ import { useGifts } from '../useGifts.ts'
 import { Catalog } from './Catalog.tsx'
 import { GiveFlow } from './GiveFlow.tsx'
 import { Inbox } from './Inbox.tsx'
+import { TasteCardForm } from './TasteCardForm.tsx'
 import { Toast } from './Toast.tsx'
 
 // `gift` is set when an unpaid gift is being paid from "Mis regalos" instead of created from the catalog.
-type View = { name: 'catalog' } | { name: 'give'; product: Product; gift?: Gift } | { name: 'gifts' }
+type View =
+  | { name: 'catalog' }
+  | { name: 'give'; product: Product; gift?: Gift }
+  | { name: 'gifts' }
+  | { name: 'card' }
 
 interface Props {
   me: User
@@ -18,7 +23,7 @@ interface Props {
   products: Product[]
 }
 
-/** What a signed-in user sees: the catalog to give, "Mis regalos", and live notices. */
+/** What a signed-in user sees: the catalog to give, "Mis regalos", "Mi tarjeta", and live notices. */
 export function Home({ me, recipient, users, products }: Props) {
   const [view, setView] = useState<View>({ name: 'catalog' })
   const { gifts, error, notices, dismiss, upsert, reload, hasNews, clearNews } = useGifts(me.id)
@@ -36,28 +41,27 @@ export function Home({ me, recipient, users, products }: Props) {
     if (product) show({ name: 'give', product, gift })
   }
 
-  const onGifts = view.name === 'gifts'
+  const tabs: { view: View; label: string; active: boolean; badge?: boolean }[] = [
+    { view: { name: 'catalog' }, label: t('tabs.give'), active: view.name === 'catalog' || view.name === 'give' },
+    { view: { name: 'gifts' }, label: t('tabs.gifts'), active: view.name === 'gifts', badge: hasNews && view.name !== 'gifts' },
+    { view: { name: 'card' }, label: t('tabs.card'), active: view.name === 'card' },
+  ]
 
   return (
     <>
       <nav className="tabs">
-        <button
-          type="button"
-          className={onGifts ? 'secondary' : undefined}
-          aria-current={onGifts ? undefined : 'page'}
-          onClick={() => show({ name: 'catalog' })}
-        >
-          {t('tabs.give')}
-        </button>
-        <button
-          type="button"
-          className={onGifts ? undefined : 'secondary'}
-          aria-current={onGifts ? 'page' : undefined}
-          onClick={() => show({ name: 'gifts' })}
-        >
-          {t('tabs.gifts')}
-          {hasNews && !onGifts && <span className="badge">{t('tabs.new')}</span>}
-        </button>
+        {tabs.map((tab) => (
+          <button
+            key={tab.view.name}
+            type="button"
+            className={tab.active ? undefined : 'secondary'}
+            aria-current={tab.active ? 'page' : undefined}
+            onClick={() => show(tab.view)}
+          >
+            {tab.label}
+            {tab.badge && <span className="badge">{t('tabs.new')}</span>}
+          </button>
+        ))}
       </nav>
 
       <div role="status" aria-live="polite" className="toasts">
@@ -78,6 +82,7 @@ export function Home({ me, recipient, users, products }: Props) {
           onPay={payLater}
         />
       )}
+      {view.name === 'card' && <TasteCardForm me={me} products={products} />}
       {view.name === 'give' && (
         <GiveFlow
           key={`${view.product.id}:${view.gift?.id ?? 'new'}`}

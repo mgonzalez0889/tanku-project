@@ -12,7 +12,7 @@ Prueba técnica full stack: una tienda ficticia (Nido) donde **regalar deja de s
 
 **Solución.** Convertir el regalo en una conversación corta entre dos personas:
 
-1. **Quien recibe** guarda una *tarjeta de gustos* privada (categorías y etiquetas que le gustan o que evita, y su talla).
+1. **Quien recibe** guarda una *tarjeta de gustos* privada en la pestaña *Mi tarjeta* (categorías y etiquetas que le gustan o que evita, y su talla).
 2. **Quien regala** ve el catálogo **ordenado para esa persona**: los productos que evita desaparecen y los que le gustan suben. Nunca ve la tarjeta ni un puntaje, solo el orden.
 3. Paga en un checkout simulado. Si elige la opción *"Según sus gustos"*, la talla se completa con la de la tarjeta sin mostrársela.
 4. **Quien recibe ve el regalo aparecer en vivo** (no antes del pago, para mantener la sorpresa) y puede **aceptarlo o cambiar la variante una sola vez** (el "cambio previo"). Quien regala se entera en vivo y ve "cambió Negro → Azul".
@@ -34,7 +34,6 @@ Para medirlo de verdad haría falta persistir un registro de eventos (`gift_crea
 
 | Pendiente | Cómo lo haría |
 |---|---|
-| Pantalla para editar la tarjeta de gustos | El `PUT /api/users/:id/taste-card` ya existe y está probado (valida contra el catálogo); falta el formulario en el front: categorías y etiquetas como casillas, talla como selector. Las dos tarjetas del demo vienen cargadas |
 | Base de datos y registro de eventos | PostgreSQL con las tablas de usuarios, productos, regalos, pagos y eventos; el almacén actual (`store.ts`) es el único punto que cambiaría |
 | Inicio de sesión | Hoy hay dos usuarios precargados y los endpoints confían en quien llama; con sesión, el servidor comprobaría quién actúa |
 | Resolver un pago "en verificación" | Una confirmación de la pasarela (webhook) que apruebe o rechace el pago pendiente, y bloquear un segundo cobro mientras haya uno abierto |
@@ -44,7 +43,7 @@ Para medirlo de verdad haría falta persistir un registro de eventos (`gift_crea
 ## Cómo probarlo
 
 1. Abre la URL en **dos ventanas** (mejor una normal y una privada, o dos navegadores): en una elige **Valentina** y en la otra **Santiago** (selector arriba).
-2. Como **Santiago**, abre *Mis regalos* y espera.
+2. Como **Santiago**, abre *Mis regalos* y espera. (Antes puedes pasar por *Mi tarjeta*: cambia lo que te gusta o evitas, guarda, y el catálogo de Valentina cambia.)
 3. Como **Valentina**: elige un producto → *Regalar* → continúa al pago.
 4. Tarjetas de prueba (no se cobra nada), por los **últimos 4 dígitos**:
    - termina en `0000` (o cualquier otra de 16 dígitos): **aprobada**
@@ -59,7 +58,7 @@ Requisitos: **Node 24** y npm.
 ```bash
 npm install
 npm run dev          # API en :3001 y front en http://localhost:5173 (con proxy a la API)
-npm test --workspaces --if-present   # 178 pruebas (API y front)
+npm test --workspaces --if-present   # 198 pruebas (API y front)
 ```
 
 Modo producción, igual que en el despliegue (un solo proceso y una sola URL):
@@ -123,7 +122,7 @@ El **pago** (`Payment`) es `pending`, `approved` o `rejected`, y cada intento cr
 | `POST /api/gifts/:id/accept` · `…/change-variant` | quien recibe acepta, o cambia a otra variante del producto y acepta |
 | Socket.io (`auth.userId`) | `gift:received` (a quien recibe, al aprobarse el pago) · `gift:accepted` (a quien regala, con la variante original si cambió) |
 
-**Cómo está probado.** 178 pruebas automáticas: el dominio, la API por HTTP (incluido el servidor que sirve el front), los avisos con sockets reales y la lógica del front. Además, el flujo completo se verificó en un **navegador real con dos usuarios a la vez** (aviso en vivo en las dos direcciones, cambio de variante, reanudar un pago, recarga de rutas y producción en una sola URL).
+**Cómo está probado.** 198 pruebas automáticas: el dominio, la API por HTTP (incluido el servidor que sirve el front), los avisos con sockets reales y la lógica del front. Además, el flujo completo se verificó en un **navegador real con dos usuarios a la vez** (aviso en vivo en las dos direcciones, cambio de variante, reanudar un pago, editar la tarjeta de gustos y ver su efecto en el catálogo de la otra persona, recarga de rutas y producción en una sola URL).
 
 ## Seguridad, privacidad y límites conocidos
 

@@ -1,5 +1,6 @@
-import type { ApiErrorCode, Gift, PayResponse, Product, User } from '@tanku/shared'
+import type { ApiErrorCode, Gift, PayResponse, Product, TasteCard, User } from '@tanku/shared'
 import type { GiftRequest } from './gifts.ts'
+import type { TasteCardRequest } from './tasteCard.ts'
 
 /** The API answered with an error; `code` is UNKNOWN when there was no usable answer. */
 export class ApiError extends Error {
@@ -45,6 +46,9 @@ export const api = {
   products: () => request<Product[]>('GET', '/api/products'),
   /** The gifts the user can see: all they gave, and what they received once it is paid. */
   giftsOf: (userId: string) => request<Gift[]>('GET', `/api/users/${encodeURIComponent(userId)}/gifts`),
+  tasteCard: (userId: string) => request<TasteCard>('GET', `/api/users/${encodeURIComponent(userId)}/taste-card`),
+  saveTasteCard: (userId: string, card: TasteCardRequest) =>
+    request<TasteCard>('PUT', `/api/users/${encodeURIComponent(userId)}/taste-card`, card),
   createGift: (gift: GiftRequest) => request<Gift>('POST', '/api/gifts', gift),
   accept: (giftId: string) => request<Gift>('POST', `/api/gifts/${encodeURIComponent(giftId)}/accept`),
   /** The recipient swaps the variant and accepts in one step (it can only happen once). */

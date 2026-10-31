@@ -108,4 +108,28 @@ describe('the API calls of the gifts screens', () => {
       body: '{"variantId":"blue"}',
     })
   })
+
+  it('asks for the taste card of a user', async () => {
+    const fetchMock = stubFetch(new Response('{}', { status: 200 }))
+
+    await api.tasteCard('user-santiago')
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/users/user-santiago/taste-card', {
+      method: 'GET',
+      headers: undefined,
+      body: undefined,
+    })
+  })
+
+  it('saves the taste card with a PUT and the card in the body', async () => {
+    const fetchMock = stubFetch(new Response('{}', { status: 200 }))
+
+    await api.saveTasteCard('user-santiago', { favoriteCategories: ['tech'], likedTags: ['music'], avoidedTags: [] })
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/users/user-santiago/taste-card', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: '{"favoriteCategories":["tech"],"likedTags":["music"],"avoidedTags":[]}',
+    })
+  })
 })
