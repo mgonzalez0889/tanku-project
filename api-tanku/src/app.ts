@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { resolve } from "node:path";
 import type { Gift, Product } from "@tanku/shared";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { createStore, type Store } from "./data/store.js";
@@ -21,7 +22,11 @@ const statusByCode: Record<DomainErrorCode, number> = {
   GIFT_NOT_FOUND: 404,
 };
 
-export function createApp(store: Store = createStore(), notifier: Notifier = noopNotifier) {
+export function createApp(
+  store: Store = createStore(),
+  notifier: Notifier = noopNotifier,
+  options: { staticDir?: string } = {},
+) {
   const app = express();
   app.use(express.json());
 
@@ -128,6 +133,21 @@ export function createApp(store: Store = createStore(), notifier: Notifier = noo
     requireUser(userId);
     res.json(store.gifts.filter((gift) => isVisibleTo(gift, userId)));
   });
+
+  // In production the API also serves the front (one origin, so no CORS): its files, and its page for
+  // any other GET that is not the API or the socket, so reloading a route of the front works.
+  if (options.staticDir) {
+    const staticDir = options.staticDir;
+    const isApiOrSocket = /^\/(api|socket\.io)(\/|$)/; // /api and /api/... , /socket.io and /socket.io/...
+    app.use(express.static(staticDir));
+    app.use((req, res, next) => {
+      if (req.method !== "GET" || isApiOrSocket.test(req.path)) {
+        next();
+        return;
+      }
+      res.sendFile(resolve(staticDir, "index.html"));
+    });
+  }
 
   app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (error instanceof DomainError) {

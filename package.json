@@ -7,6 +7,8 @@
     "front-tanku"
   ],
   "scripts": {
+    "build": "npm run build -w front-tanku",
+    "start": "npm run start -w api-tanku",
     "dev": "concurrently -n api,web \"npm run dev -w api-tanku\" \"npm run dev -w front-tanku\""
   },
   "devDependencies": {

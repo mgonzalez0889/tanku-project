@@ -1,0 +1,13 @@
+# One web service: the API (Express + Socket.io) also serves the built front, on the same URL.
+# No secrets here: Render provides PORT. Deploy with "New > Blueprint" or copy these values by hand.
+services:
+  - type: web
+    name: tanku
+    runtime: node
+    plan: free
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
