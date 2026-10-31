@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { resolve } from "node:path";
+import { extname, resolve } from "node:path";
 import type { Gift, Product } from "@tanku/shared";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { createStore, type Store } from "./data/store.js";
@@ -18,6 +18,7 @@ const statusByCode: Record<DomainErrorCode, number> = {
   INVALID_TASTE_CARD: 400,
   INVALID_GIFT: 400,
   INVALID_PAYMENT: 400,
+  RECIPIENT_SIZE_UNKNOWN: 400,
   USER_NOT_FOUND: 404,
   GIFT_NOT_FOUND: 404,
 };
@@ -141,7 +142,9 @@ export function createApp(
     const isApiOrSocket = /^\/(api|socket\.io)(\/|$)/; // /api and /api/... , /socket.io and /socket.io/...
     app.use(express.static(staticDir));
     app.use((req, res, next) => {
-      if (req.method !== "GET" || isApiOrSocket.test(req.path)) {
+      // A path with a file extension is a file that is not there (for example an old asset after a
+      // redeploy): that is a 404, not the page.
+      if (req.method !== "GET" || isApiOrSocket.test(req.path) || extname(req.path) !== "") {
         next();
         return;
       }

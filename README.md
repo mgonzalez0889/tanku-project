@@ -58,7 +58,7 @@ Requisitos: **Node 24** y npm.
 ```bash
 npm install
 npm run dev          # API en :3001 y front en http://localhost:5173 (con proxy a la API)
-npm test --workspaces --if-present   # 198 pruebas (API y front)
+npm test --workspaces --if-present   # 204 pruebas (API y front)
 ```
 
 Modo producción, igual que en el despliegue (un solo proceso y una sola URL):
@@ -122,14 +122,14 @@ El **pago** (`Payment`) es `pending`, `approved` o `rejected`, y cada intento cr
 | `POST /api/gifts/:id/accept` · `…/change-variant` | quien recibe acepta, o cambia a otra variante del producto y acepta |
 | Socket.io (`auth.userId`) | `gift:received` (a quien recibe, al aprobarse el pago) · `gift:accepted` (a quien regala, con la variante original si cambió) |
 
-**Cómo está probado.** 198 pruebas automáticas: el dominio, la API por HTTP (incluido el servidor que sirve el front), los avisos con sockets reales y la lógica del front. Además, el flujo completo se verificó en un **navegador real con dos usuarios a la vez** (aviso en vivo en las dos direcciones, cambio de variante, reanudar un pago, editar la tarjeta de gustos y ver su efecto en el catálogo de la otra persona, recarga de rutas y producción en una sola URL).
+**Cómo está probado.** 204 pruebas automáticas: el dominio, la API por HTTP (incluido el servidor que sirve el front), los avisos con sockets reales y la lógica del front. Además, el flujo completo se verificó en un **navegador real con dos usuarios a la vez** (aviso en vivo en las dos direcciones, cambio de variante, reanudar un pago, editar la tarjeta de gustos y ver su efecto en el catálogo de la otra persona, recarga de rutas y producción en una sola URL).
 
 ## Seguridad, privacidad y límites conocidos
 
 - **Sin claves en el repositorio.** Variables de entorno (`PORT`), `.env` ignorado y un `.env.example` sin valores.
-- **La tarjeta de gustos es privada**: el catálogo ordenado solo devuelve productos en orden, sin puntaje ni tarjeta. Aun así, quien compare el catálogo completo con el ordenado puede deducir qué productos se ocultaron.
+- **La tarjeta de gustos es privada para la interfaz**: el catálogo ordenado solo devuelve productos en orden, sin puntaje ni tarjeta, y ninguna pantalla se la muestra a quien regala. Como no hay sesión, el endpoint de la tarjeta no distingue quién pregunta: quien conozca su URL podría leerla. Aun así, quien compare el catálogo completo con el ordenado puede deducir qué productos se ocultaron.
 - **Sin inicio de sesión** (lo pide el enunciado): los endpoints de la tarjeta y de las acciones confían en quien llama. Con sesión, el servidor comprobaría que actúa la persona correcta.
-- **La talla elegida "según sus gustos" se ve en la respuesta** al crear el regalo (decisión consciente: es solo una talla y quien recibe puede cambiarla). La lista de lo regalado no la muestra.
+- **La talla elegida "según sus gustos" se ve en la respuesta** al crear el regalo (decisión consciente: es solo una talla y quien recibe puede cambiarla). La lista de lo regalado no la muestra. Si quien recibe no guardó talla ("Sin preferencia"), quien regala recibe un aviso claro y elige una talla él mismo.
 - **Un pago "en verificación" nunca se resuelve** (no hay pasarela real): se puede intentar con otra tarjeta, y en un sistema real otro cobro dejaría el primero abierto.
 - **Datos en memoria**: se pierden al reiniciar y la instancia debe ser única.
 

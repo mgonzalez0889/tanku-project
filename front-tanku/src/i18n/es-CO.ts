@@ -101,6 +101,7 @@ export const messages = {
   'error.INVALID_TASTE_CARD': 'La tarjeta de gustos no es válida.',
   'error.INVALID_GIFT': 'No pudimos crear el regalo. Revisa los datos.',
   'error.INVALID_PAYMENT': 'El número de tarjeta no es válido.',
+  'error.RECIPIENT_SIZE_UNKNOWN': 'Esta persona no ha guardado su talla. Elige una talla de la lista.',
   'error.USER_NOT_FOUND': 'No encontramos a esa persona.',
   'error.GIFT_NOT_FOUND': 'No encontramos ese regalo.',
   'error.INVALID_JSON': 'No pudimos leer la solicitud.',

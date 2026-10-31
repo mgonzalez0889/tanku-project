@@ -119,17 +119,38 @@ describe("createGift rejects with INVALID_GIFT", () => {
     ["a variant that does not belong to the product", { ...validBody, variantId: "xl" }],
     ["a variantId that is not a string", { ...validBody, variantId: 5 }],
     ["a missing variantId on a non-fashion product", withoutVariant],
-    [
-      "a missing variantId on fashion when the recipient has no preferredSize",
-      { ...withoutVariant, recipientId: "no-size", productId: "shirt" },
-    ],
-    [
-      "a missing variantId on fashion when the recipient has no taste card",
-      { ...withoutVariant, recipientId: "no-card", productId: "shirt" },
-    ],
   ];
 
   it.each(invalidBodies)("%s", (_name, body) => {
     expect(codeOf(() => create(body))).toBe("INVALID_GIFT");
+  });
+});
+
+describe("createGift when 'according to their taste' cannot give a size", () => {
+  const { variantId: _omitted, ...withoutVariant } = validBody;
+
+  // The giver asked for the recipient's size (no variantId) but there is none to use: say so, with its own code.
+  const noSizeToUse: [string, unknown][] = [
+    ["the recipient's card has no size", { ...withoutVariant, recipientId: "no-size", productId: "shirt" }],
+    ["the recipient has no taste card", { ...withoutVariant, recipientId: "no-card", productId: "shirt" }],
+  ];
+
+  it.each(noSizeToUse)("answers RECIPIENT_SIZE_UNKNOWN when %s", (_name, body) => {
+    expect(codeOf(() => create(body))).toBe("RECIPIENT_SIZE_UNKNOWN");
+  });
+
+  it("answers RECIPIENT_SIZE_UNKNOWN when the recipient's size is not one the product offers", () => {
+    const ctxWithOddSize = { ...ctx, tasteCards: { recipient: card("recipient", "xxl") } };
+
+    const failure = () =>
+      createGift({ giverId: "giver", recipientId: "recipient", productId: "shirt" }, ctxWithOddSize, "gift-1");
+
+    expect(codeOf(failure)).toBe("RECIPIENT_SIZE_UNKNOWN");
+  });
+
+  it("still lets the giver choose a size herself", () => {
+    const gift = create({ giverId: "giver", recipientId: "no-size", productId: "shirt", variantId: "l" });
+
+    expect(gift.variantId).toBe("l");
   });
 });

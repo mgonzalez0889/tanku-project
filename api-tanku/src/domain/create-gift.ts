@@ -14,13 +14,18 @@ function invalid(message: string): DomainError {
   return new DomainError("INVALID_GIFT", message);
 }
 
-/** The variant the giver asked for or, for fashion, the recipient's preferred size. */
+/** The variant the giver asked for or, for fashion without one, the recipient's preferred size. */
 function chooseVariantId(product: Product, variantId: unknown, recipientCard: TasteCard | undefined): string {
-  const candidate = variantId ?? (product.category === "fashion" ? recipientCard?.preferredSize : undefined);
-  if (typeof candidate !== "string" || !product.variants.some((variant) => variant.id === candidate)) {
+  if (variantId === undefined && product.category === "fashion") {
+    const size = recipientCard?.preferredSize;
+    if (size && product.variants.some((variant) => variant.id === size)) return size;
+    // "According to their taste" was asked for but there is no size to use: tell the giver to pick one.
+    throw new DomainError("RECIPIENT_SIZE_UNKNOWN", "The recipient has no size this product offers");
+  }
+  if (typeof variantId !== "string" || !product.variants.some((variant) => variant.id === variantId)) {
     throw invalid("variantId must be a variant of the product");
   }
-  return candidate;
+  return variantId;
 }
 
 /** Validates a gift request and returns the new gift, waiting for its payment. */

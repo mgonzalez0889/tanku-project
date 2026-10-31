@@ -24,8 +24,9 @@ export function useGifts(userId: string) {
       .giftsOf(userId)
       .then((list) => {
         // A gift changed while this was in flight, so this list may be older than it: read again.
-        if (changes.current === startedAt) setGifts(list)
-        else reload()
+        if (changes.current !== startedAt) return reload()
+        setGifts(list)
+        setError(null) // a good read clears the error of an earlier failed one
       })
       .catch((failure) => setError(errorMessage(failure)))
   }, [userId])

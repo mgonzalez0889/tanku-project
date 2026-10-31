@@ -12,7 +12,11 @@ export function useLoad<T>(
   useEffect(() => {
     let current = true // an answer that arrives after `deps` changed is ignored
     load()
-      .then((result) => current && setData(result))
+      .then((result) => {
+        if (!current) return
+        setData(result)
+        setError(null) // a good answer clears the error of an earlier failed one
+      })
       .catch((failure) => current && setError(errorMessage(failure)))
     return () => {
       current = false

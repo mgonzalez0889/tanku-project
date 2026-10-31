@@ -8,6 +8,10 @@ describe('errorMessage', () => {
     expect(errorMessage(new ApiError('INVALID_GIFT'))).toBe(messages['error.INVALID_GIFT'])
   })
 
+  it('tells the giver to pick a size when the recipient has not saved theirs', () => {
+    expect(errorMessage(new ApiError('RECIPIENT_SIZE_UNKNOWN'))).toBe(messages['error.RECIPIENT_SIZE_UNKNOWN'])
+  })
+
   it('gives the generic text for a code it does not know', () => {
     expect(errorMessage(new ApiError('SOMETHING_NEW' as never))).toBe(messages['error.UNKNOWN'])
   })

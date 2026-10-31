@@ -28,6 +28,7 @@ export type DomainErrorCode =
   | "INVALID_TASTE_CARD"
   | "INVALID_GIFT"
   | "INVALID_PAYMENT"
+  | "RECIPIENT_SIZE_UNKNOWN"
   | "USER_NOT_FOUND"
   | "GIFT_NOT_FOUND";
 

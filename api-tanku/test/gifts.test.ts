@@ -47,6 +47,23 @@ it("preselects the recipient's size for a fashion product without variantId", as
   expect(gift.variantId).toBe("l");
 });
 
+it("answers 400 RECIPIENT_SIZE_UNKNOWN when the recipient saved no size, and accepts a size the giver picks", async () => {
+  // Santiago's card without a size, as the "Mi tarjeta" screen saves it for "Sin preferencia".
+  await server.send("PUT", "/api/users/user-santiago/taste-card", {
+    favoriteCategories: [],
+    likedTags: [],
+    avoidedTags: [],
+  });
+  const shirtForSantiago = { giverId: "user-valentina", recipientId: "user-santiago", productId: "product-tshirt" };
+
+  const withoutSize = await postGift(shirtForSantiago);
+  const withSize = await postGift({ ...shirtForSantiago, variantId: "m" });
+
+  expect(withoutSize.status).toBe(400);
+  expect(await withoutSize.json()).toEqual({ error: "RECIPIENT_SIZE_UNKNOWN" });
+  expect(withSize.status).toBe(201);
+});
+
 it("keeps the gift hidden from the recipient until it is paid", async () => {
   await postGift(speakerFromValentinaToSantiago);
 

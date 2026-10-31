@@ -80,3 +80,18 @@ it("does not answer the bare /api path with the page either", async () => {
 
   expect(res.status).toBe(404);
 });
+
+it("answers 404 for a missing file, so a stale asset after a redeploy is not mistaken for the app", async () => {
+  await serve(frontDir);
+
+  const res = await server.get("/assets/index-VIEJO.js");
+
+  expect(res.status).toBe(404);
+  expect(await res.text()).not.toContain("Nido");
+});
+
+it("still serves the page for a front route that has no file extension", async () => {
+  await serve(frontDir);
+
+  expect((await server.get("/mis-regalos")).status).toBe(200);
+});
