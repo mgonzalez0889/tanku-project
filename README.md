@@ -2,7 +2,7 @@
 
 Prueba técnica full stack: una tienda ficticia (Nido) donde **regalar deja de ser adivinar**. Quien recibe cuenta en privado qué le gusta, quien regala ve el catálogo ordenado para esa persona sin ver esa tarjeta, y quien recibe puede **cambiar la talla o la opción antes de aceptar**, con aviso en vivo para ambos.
 
-- **URL pública:** _(se añade al desplegar; ver [Despliegue](#despliegue))_
+- **URL pública:** https://tanku.onrender.com (plan gratuito: si lleva un rato sin uso, el primer acceso tarda cerca de un minuto en despertar; ver [Despliegue](#despliegue))
 - **Código:** este repositorio (front y back, en un monorepo)
 - **Cómo probarlo en 2 minutos:** [más abajo](#cómo-probarlo)
 
